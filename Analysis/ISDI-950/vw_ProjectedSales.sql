@@ -1,7 +1,7 @@
 USE [BI]
 GO
 
-/****** Object:  View [dbo].[VW_ProjectedSalesFact_Datasource]    Script Date: 06/27/2016 15:14:54 ******/
+/****** Object:  View [dbo].[VW_ProjectedSales]    Script Date: 06/27/2016 15:14:54 ******/
 SET ANSI_NULLS ON
 GO
 
@@ -16,11 +16,12 @@ Description	: This script creates the data source for users of ProjectedSalesFac
 
 Audit Info:
 Change By:			Date		Description
-
+Lisa McHugh			07/13/2016  Removed join to PMCandidate.  Pulling those columns from customer. 
+								Changed name from vw_ProjectedSalesFact_Datasource to vw_ProjectedSales.
 *******************************************************************************************/
----DROP VIEW [dbo].[VW_ProjectedSalesFact_Datasource]
+---DROP VIEW [dbo].[VW_ProjectedSales]
 
-CREATE VIEW [dbo].[VW_ProjectedSalesFact_Datasource]
+CREATE VIEW [dbo].[VW_ProjectedSales]
 AS 
 
 SELECT
@@ -120,6 +121,13 @@ SELECT
 	
 /*dw.dbo.vw_Customer*/	
 	cust.customerid,
+	cust.TotalAvailableProperties,
+	cust.TotalLiveListings,
+	cust.AccountManagerName,
+	cust.OwningTeam,
+	--Segment,
+	--AccountName,
+	--CampaignOnAccount,
 	
 /*dw.dbo.VW_PersonType*/	
 	per.PersonTypeName,
@@ -143,11 +151,11 @@ SELECT
 	ps.ProductClusterId,
 	ps.ProductId,
 	pc.ProductFamily,
+	pc.ProductCategory,
 	pc.ProductClusterName,
-	--pc.ProductLine, --LAM Put this back in later.
 	pc.ProductClass,	
-	prod.ProductSuite,
-	prod.ProductCustomer,
+	pc.ProductSuite,
+	pc.ProductCustomer,
 
 ---Subscription     
 /*dw.dbo.vw_Subscription*/	
@@ -201,14 +209,13 @@ FROM
 	JOIN dw.dbo.vw_InvoiceCategory ic ON ps.InvoiceCategoryId = ic.InvoiceCategoryId
 	JOIN dw.dbo.vw_PaymentType pt ON ps.PaymentTypeId = pt.PaymentTypeId
 	JOIN dw.dbo.VW_PersonType per ON ps.PersonTypeId = per.PersonTypeId
-	JOIN dw.dbo.vw_Product prod ON ps.ProductId = prod.ProductId
 	JOIN dw.dbo.Application ap ( NOLOCK ) ON ps.SourceAppId = ap.AppId
     JOIN dw.dbo.vw_WebsiteReferralMediumSession web ON ps.WebsiteReferralMediumSessionId = web.WebsiteReferralMediumSessionId
     LEFT JOIN dw.dbo.vw_DestinationAttributes da ON ps.StrategicDestinationAttributesId = da.DestinationAttributesId
     JOIN dw.dbo.vw_Tier tie ON la.tierid = tie.tierid
     JOIN dw.dbo.vw_Subscription sub ON ps.SubscriptionId = sub.SubscriptionId
     JOIN dw.dbo.vw_ProductCluster pc ( NOLOCK ) ON pc.ProductClusterId = ps.ProductClusterId
-		AND pc.ProductClusterName != 'Integrated Commissions'
+
 GO
 GRANT SELECT
     ON OBJECT::[dbo].[VW_ProjectedSalesFact_Datasource] TO [WVRGROUP\ReportingAnalyticsTeam]
@@ -223,3 +230,4 @@ GRANT SELECT
     AS [dbo]
 
 GO 
+
